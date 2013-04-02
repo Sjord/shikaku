@@ -1,0 +1,180 @@
+<head>
+    <style type="text/css">
+        td { 
+            height: 30px;
+            line-height: 30px;
+            width: 30px;
+            text-align: center;
+            border: solid black 1px;
+        }
+        .n1 { background: #f11121; }
+        .n2 { background: #c22121; }
+        .n3 { background: #1331e1; }
+        .n4 { background: #c441e1; }
+        .n5 { background: #155121; }
+        .n6 { background: #c66121; }
+        .n7 { background: #1771e1; }
+        .n8 { background: #c881e1; }
+        .n9 { background: #199121; }
+        .n10 { background: #c9a121; }
+    </style>
+</head>
+<body>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+
+<script>
+    var squareId = 1;
+    var grid = [];
+    for (var x = 0; x < 10; x++) {
+        grid[x] = [];
+    }
+
+    var i = 0;
+    while (!isFull(grid) && i++ < 1000) {
+        sq = addSquare(grid);
+        if (!sq) {
+            removeSquare(grid);
+        }
+    }
+
+    console.log(i);
+    console.log(grid);
+
+
+    var table = $('<table></table>');
+    for (var x = 0; x < 10; x++) {
+        var tr = $('<tr></tr>');
+        for (var y = 0; y < 10; y++) {
+            var td = $('<td></td>');
+            td.text(grid[x][y]);
+            td.addClass('n' + grid[x][y]);
+            tr.append(td);
+        }
+        table.append(tr);
+    }
+    $('body').append(table);
+
+    function isFull(grid) {
+        for (var x = 0; x < 10; x++) {
+            for (var y = 0; y < 10; y++) {
+                if (!grid[x][y]) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+
+    function addSquare(grid) {
+        do {
+            var x = Math.floor(Math.random() * 10);
+            var y = Math.floor(Math.random() * 10);
+        } while (grid[x][y]);
+
+        var rect = {x: x, y: y, width: 1, height: 1};
+        for (var i = 0; i < 6; i++) {
+            newRect = expandRect(grid, rect)
+            if (!newRect) {
+                if (i == 0) {
+                    return false;
+                }
+                break;
+            }
+            rect = newRect;
+        }
+
+        addGridRect(grid, rect, squareId++);
+
+        return true;
+    }
+
+    function removeSquare(grid) {
+        console.log('removeSquare');
+        do {
+            var x = Math.floor(Math.random() * 10);
+            var y = Math.floor(Math.random() * 10);
+        } while (!grid[x][y]);
+
+        var value = grid[x][y];
+
+        for (var x = 0; x < 10; x++) {
+            for (var y = 0; y < 10; y++) {
+                if (grid[x][y] == value) {
+                    grid[x][y] = null;
+                }
+            }
+        }
+    }
+
+    function addGridRect(grid, rect, squareId) {
+        for (var x = 0; x < rect.width; x++) {
+            for (var y = 0; y < rect.height; y++) {
+                grid[x + rect.x][y + rect.y] = squareId;
+            }
+        }
+    }
+
+    function expandRect(grid, rect) {
+        dir = ['top', 'left', 'right', 'down'];
+        shuffle(dir)
+        for (var i = 0; i < dir.length; i++) {
+            res = expandRectDir(grid, rect, dir[i])
+            if (res) {
+                return res;
+            }
+        }
+        return null;
+    }
+
+    function expandRectDir(grid, rect, dir) {
+        if (dir == 'top' && rect.y > 0) {
+            newRect = {x: rect.x, y: rect.y - 1, width: rect.width, height: rect.height + 1 };
+            if (isEmpty(grid, newRect)) {
+                return newRect;
+            }
+        }
+        if (dir == 'left' && rect.x > 0) {
+            newRect = {x: rect.x - 1, y: rect.y, width: rect.width + 1, height: rect.height };
+            if (isEmpty(grid, newRect)) {
+                return newRect;
+            }
+        }
+        if (dir == 'down' && (rect.y + rect.height) < 10) {
+            newRect = {x: rect.x, y: rect.y, width: rect.width, height: rect.height + 1 };
+            if (isEmpty(grid, newRect)) {
+                return newRect;
+            }
+        }
+        if (dir == 'right' && (rect.x + rect.width) < 10) {
+            newRect = {x: rect.x, y: rect.y, width: rect.width + 1, height: rect.height };
+            if (isEmpty(grid, newRect)) {
+                return newRect;
+            }
+        }
+
+        return null;
+    }
+
+    function isEmpty(grid, rect) {
+        var width = rect.width;
+        var height = rect.height;
+        var x = rect.x;
+        var y = rect.y;
+        for (var left = 0; left < width; left++) {
+            for (var top = 0; top < height; top++) {
+                if (grid[x + left][y + top]) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    function shuffle(o){ //v1.0
+        for(var j, x, i = o.length; i; j = parseInt(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
+        return o;
+    };
+
+</script>        
