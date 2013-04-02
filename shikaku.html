@@ -21,6 +21,8 @@
 </head>
 <body>
 
+<canvas id="canvas" width="501" height="501"></canvas>
+
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
 
 <script>
@@ -41,19 +43,78 @@
     console.log(i);
     console.log(grid);
 
+    drawCanvas();
 
-    var table = $('<table></table>');
-    for (var x = 0; x < 10; x++) {
-        var tr = $('<tr></tr>');
-        for (var y = 0; y < 10; y++) {
-            var td = $('<td></td>');
-            td.text(grid[x][y]);
-            td.addClass('n' + grid[x][y]);
-            tr.append(td);
-        }
-        table.append(tr);
+    function drawCanvas() {
+        var canvas = $('#canvas');
+        var context = canvas.get(0).getContext('2d');
+        updateCanvas(context);
+        $('body').append(canvas);
     }
-    $('body').append(table);
+
+    function updateCanvas(context) {
+        for (var x = 0; x < 10; x++) {
+            for (var y = 0; y < 10; y++) {
+                context.strokeRect(0.5 + x * 50, 0.5 + y * 50, 50, 50);
+                var value = grid[x][y];
+
+                var color = getColor(value);
+                context.fillStyle = '#' + color;
+                context.fillRect(10 + x * 50, 10 + y * 50, 30, 30);
+
+                context.fillStyle = 'black';
+                context.textAlign = 'center';
+                context.fillText(value, 25.5 + x * 50, 25.5 + y * 50);
+            }
+        }
+    }
+
+    var start = null;
+    $('#canvas').on('mousedown', function (e) {
+        var x = Math.floor(e.offsetX / 50);
+        var y = Math.floor(e.offsetY / 50);
+        console.log(x, y);
+        start = {x: x, y: y};
+        $('#canvas').on('mousemove', drag);
+    });
+
+    $('#canvas').on('mouseup', function (e) {
+        $(this).off('mousemove');
+    });
+
+    function drag(e) {
+        var x = Math.floor(e.offsetX / 50);
+        var y = Math.floor(e.offsetY / 50);
+        var width = (x - start.x) * 50;
+        var height = (y - start.y) * 50;
+        var context = this.getContext('2d');
+        updateCanvas(context);
+        context.fillRect(start.x * 50, start.y * 50, width, height);
+    }
+
+    function getColor(value) {
+        var color = value * 1777781 % 16777213;
+        var hex = color.toString(16);
+        while (hex.length < 6) {
+            hex += '0';
+        }
+        return hex;
+    }
+
+    function drawTable() {
+        var table = $('<table></table>');
+        for (var x = 0; x < 10; x++) {
+            var tr = $('<tr></tr>');
+            for (var y = 0; y < 10; y++) {
+                var td = $('<td></td>');
+                td.text(grid[x][y]);
+                td.addClass('n' + grid[x][y]);
+                tr.append(td);
+            }
+            table.append(tr);
+        }
+        $('body').append(table);
+    }
 
     function isFull(grid) {
         for (var x = 0; x < 10; x++) {
