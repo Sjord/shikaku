@@ -28,9 +28,12 @@
 <script>
     var squareId = 1;
     var grid = [];
+    grid.squares = [];
     for (var x = 0; x < 10; x++) {
         grid[x] = [];
     }
+
+    var draggedSquares = [];
 
     var i = 0;
     while (!isFull(grid) && i++ < 1000) {
@@ -39,9 +42,6 @@
             removeSquare(grid);
         }
     }
-
-    console.log(i);
-    console.log(grid);
 
     drawCanvas();
 
@@ -53,43 +53,59 @@
     }
 
     function updateCanvas(context) {
+        // clear canvas
+        context.fillStyle = 'white';
+        context.fillRect(0, 0, 500, 500);
+
+        // user dragged squares
+        for (var i = 0; i < draggedSquares.length; i++) {
+            var square = draggedSquares[i];
+            context.fillStyle = '#ccc';
+            context.fillRect(3 + square.x * 50, 3 + square.y * 50, square.width * 50 - 6, square.height * 50 - 6);
+        }
+
+        // grid
         for (var x = 0; x < 10; x++) {
             for (var y = 0; y < 10; y++) {
                 context.strokeRect(0.5 + x * 50, 0.5 + y * 50, 50, 50);
                 var value = grid[x][y];
-
-                var color = getColor(value);
-                context.fillStyle = '#' + color;
-                context.fillRect(10 + x * 50, 10 + y * 50, 30, 30);
-
-                context.fillStyle = 'black';
-                context.textAlign = 'center';
-                context.fillText(value, 25.5 + x * 50, 25.5 + y * 50);
             }
+        }
+        
+        context.fillStyle = 'black';
+        context.textAlign = 'center';
+        for (var i = 0; i < grid.squares.length; i++) {
+            var square = grid.squares[i];
+            var textX = square.pos.x + square.textPos.x;
+            var textY = square.pos.y + square.textPos.y;
+            var surface = square.pos.width * square.pos.height;
+            context.fillText(surface, 25.5 + textX * 50, 25.5 + textY * 50);
         }
     }
 
-    var start = null;
+    var dragContext = null;
     $('#canvas').on('mousedown', function (e) {
         var x = Math.floor(e.offsetX / 50);
         var y = Math.floor(e.offsetY / 50);
-        console.log(x, y);
-        start = {x: x, y: y};
+        var square = {x: x, y: y};
+        var newlen = draggedSquares.push(square);
+        dragContext = {index: newlen - 1};
         $('#canvas').on('mousemove', drag);
     });
 
     $('#canvas').on('mouseup', function (e) {
+        dragContext = null;
         $(this).off('mousemove');
     });
 
     function drag(e) {
-        var x = Math.floor(e.offsetX / 50);
-        var y = Math.floor(e.offsetY / 50);
-        var width = (x - start.x) * 50;
-        var height = (y - start.y) * 50;
+        var square = draggedSquares[dragContext.index];
+        var x = Math.ceil(e.offsetX / 50);
+        var y = Math.ceil(e.offsetY / 50);
+        square.width = x - square.x;
+        square.height = y - square.y;
         var context = this.getContext('2d');
         updateCanvas(context);
-        context.fillRect(start.x * 50, start.y * 50, width, height);
     }
 
     function getColor(value) {
@@ -153,26 +169,27 @@
 
     function removeSquare(grid) {
         console.log('removeSquare');
-        do {
-            var x = Math.floor(Math.random() * 10);
-            var y = Math.floor(Math.random() * 10);
-        } while (!grid[x][y]);
-
-        var value = grid[x][y];
-
-        for (var x = 0; x < 10; x++) {
-            for (var y = 0; y < 10; y++) {
-                if (grid[x][y] == value) {
-                    grid[x][y] = null;
-                }
+        
+        var squareIndex = Math.floor(grid.squares.length * Math.random());
+        var square = grid.squares[squareIndex];
+        
+        for (var i = 0; i < square.pos.width; i++) {
+            for (var j = 0; j < square.pos.height; j++) {
+                var x = square.pos.x + i;
+                var y = square.pos.y + j;
+                grid[x][y] = null;
             }
         }
+        grid.squares.splice(squareIndex, 1);
     }
 
     function addGridRect(grid, rect, squareId) {
+        var textPos = {x: Math.floor(Math.random() * rect.width), y: Math.floor(Math.random() * rect.height)};
+        var square = {id: squareId, textPos: textPos, pos: rect};
+        grid.squares.push(square);
         for (var x = 0; x < rect.width; x++) {
             for (var y = 0; y < rect.height; y++) {
-                grid[x + rect.x][y + rect.y] = squareId;
+                grid[x + rect.x][y + rect.y] = square;
             }
         }
     }
